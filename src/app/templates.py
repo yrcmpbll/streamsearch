@@ -95,3 +95,34 @@ def tag_boxes(search: str, tags: list, active_tag: str) -> str:
 
     html += '<br><br>'
     return html
+
+def pagination(total_pages: int, search: str, current_page: int, tags: str) -> str:
+    """ HTML scripts to render pagination buttons. """
+    # search words and tags
+    params = f'?search={urllib.parse.quote(search)}'
+    if tags is not None:
+        params += f'&tags={tags}'
+
+    # avoid invalid page number (<=0)
+    if (current_page - 5) > 0:
+        start_from = current_page - 5
+    else:
+        start_from = 1
+
+    hrefs = []
+    if current_page != 1:
+        hrefs += [
+            f'<a href="{params}&page={1}">&lt&ltFirst</a>',
+            f'<a href="{params}&page={current_page - 1}">&ltPrevious</a>',
+        ]
+        
+    for i in range(start_from, min(total_pages + 1, start_from + 10)):
+        if i == current_page:
+            hrefs.append(f'{current_page}')
+        else:
+            hrefs.append(f'<a href="{params}&page={i}">{i}</a>')
+
+    if current_page != total_pages:
+        hrefs.append(f'<a href="{params}&page={current_page + 1}">Next&gt</a>')
+
+    return '<div>' + '&emsp;'.join(hrefs) + '</div>'
