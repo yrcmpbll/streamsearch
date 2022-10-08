@@ -18,6 +18,8 @@ def set_session_state():
         st.session_state.search = None
     if 'tags' not in st.session_state:
         st.session_state.tags = None
+    if 'page' not in st.session_state:
+        st.session_state.page = 1
 
     # get parameters in url
     para = st.experimental_get_query_params()
@@ -29,6 +31,9 @@ def set_session_state():
     if 'tags' in para:
         st.experimental_set_query_params()
         st.session_state.tags = para['tags'][0]
+    if 'page' in para:
+        st.experimental_set_query_params()
+        st.session_state.page = int(para['page'][0])
 
 def main():
     set_session_state()
@@ -38,9 +43,11 @@ def main():
         search = st.text_input('Enter search words:')
     else:
         search = st.text_input('Enter search words:', st.session_state.search)
+
     if search:
+        from_i = (st.session_state.page - 1) * PAGE_SIZE
         results = utils.index_search(es, INDEX, search, st.session_state.tags,
-                                     0, PAGE_SIZE)
+                                     from_i, PAGE_SIZE)
         total_hits = results['aggregations']['match_count']['value']
         # show number of results and time taken
         st.write(templates.number_of_results(total_hits, results['took'] / 1000),
@@ -55,9 +62,18 @@ def main():
             res = result['_source']
             res['url'] = result['_id']
             res['highlights'] = '...'.join(result['highlight']['content'])
-            st.write(templates.search_result(i, **res), unsafe_allow_html=True)
+            st.write(templates.search_result(i + from_i, **res),
+                     unsafe_allow_html=True)
             st.write(templates.tag_boxes(search, res['tags'], st.session_state.tags),
                      unsafe_allow_html=True)
+
+        # pagination
+        if total_hits > PAGE_SIZE:
+            total_pages = (total_hits + PAGE_SIZE - 1) // PAGE_SIZE
+            pagination_html = templates.pagination(total_pages, search,
+                                                   st.session_state.page,
+                                                   st.session_state.tags)
+            st.write(pagination_html, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
