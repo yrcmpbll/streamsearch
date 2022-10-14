@@ -4,12 +4,14 @@ import urllib.parse
 import streamlit as st
 from elasticsearch import Elasticsearch
 sys.path.append('srcs')
-from streamlit_app import utils, templates
+import utils, templates
 
-INDEX = 'medium_data'
+# INDEX = 'medium_data'
+INDEX = 'indexname'
 PAGE_SIZE = 5
-DOMAIN = '0.0.0.0'
-es = Elasticsearch(host=DOMAIN)
+# DOMAIN = '0.0.0.0'
+DOMAIN = 'es'
+es = Elasticsearch(hosts=[DOMAIN])
 utils.check_and_create_index(es, INDEX)
 
 def set_session_state():
@@ -60,7 +62,7 @@ def main():
         for i in range(len(results['hits']['hits'])):
             result = results['hits']['hits'][i]
             res = result['_source']
-            res['url'] = result['_id']
+            res['url'] = result['_source']['url']
             res['highlights'] = '...'.join(result['highlight']['content'])
             st.write(templates.search_result(i + from_i, **res),
                      unsafe_allow_html=True)

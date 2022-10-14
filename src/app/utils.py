@@ -1,19 +1,21 @@
 # srcs/streamlit_app/utils.py
 def check_and_create_index(es, index: str):
     # define data model
-    mappings = {
-        'mappings': {
-            'properties': {
-                'author': {'type': 'keyword'},
-                'length': {'type': 'keyword'},
-                'title': {'type': 'text'},
-                'tags': {'type': 'keyword'},
-                'content': {'type': 'text'},
-            }
-        }
-    }
-    if not es.indices.exists(index):
-        es.indices.create(index=index, body=mappings, ignore=400)
+    # mappings = {
+    #     'mappings': {
+    #         'properties': {
+    #             'url': {'type': 'string'},
+    #             'author': {'type': 'keyword'},
+    #             'length': {'type': 'keyword'},
+    #             'title': {'type': 'text'},
+    #             'tags': {'type': 'keyword'},
+    #             'content': {'type': 'text'},
+    #         }
+    #     }
+    # }
+    # if not es.indices.exists(index):
+    #     es.indices.create(index=index, body=mappings, ignore=400)
+    pass
 
 
 def index_search(es, index: str, keywords: str, filters: str,
@@ -37,14 +39,15 @@ def index_search(es, index: str, keywords: str, filters: str,
                             'query': keywords,
                             'fields': ['content'],
                             'default_operator': 'AND',
+                            # "lenient": True,
                         }
                     }
                 ],
             }
         },
         'highlight': {
-            'pre_tags': ['<b>'],
-            'post_tags': ['</b>'],
+            'pre_tags': ['<mark><b>'],
+            'post_tags': ['</b></mark>'],
             'fields': {'content': {}}
         },
         'from': from_i,
@@ -64,6 +67,7 @@ def index_search(es, index: str, keywords: str, filters: str,
         }
 
     res = es.search(index=index, body=body)
+    
     # sort popular tags
     sorted_tags = res['aggregations']['tags']['buckets']
     sorted_tags = sorted(
