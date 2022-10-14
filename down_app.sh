@@ -1,0 +1,1 @@
+sudo docker compose -f src/docker_stack/docker-compose.yml down
