@@ -1,0 +1,48 @@
+version: "3"
+services:
+  es:
+    image: elasticsearch:7.11.2
+    container_name: es
+    environment:
+      - discovery.type=single-node
+    ports: 
+      - 9200:9200
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - appnet
+    healthcheck:
+      test: "exit 0"
+  
+  seeder:
+    image: stream-search-app-seeder
+    container_name: app-seeder
+    depends_on:
+      es:
+        condition: service_healthy
+    networks:
+      - appnet
+    environment:
+      ES_URL_INDEX: 'http://es:9200/indexname/'
+      ES_URL_IMPORT: 'http://es:9200/indexname/_doc/_bulk?pretty'
+
+  web:
+    image: stream-search-app
+    container_name: search-app
+    depends_on:
+      es:
+        condition: service_healthy
+    ports: 
+      - 8501:8501
+    networks:
+      - appnet
+    healthcheck:
+      test: "exit 0"
+
+volumes:
+  esdata:
+    driver: local
+
+networks:
+  appnet:
+    driver: bridge
